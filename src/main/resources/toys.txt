@@ -1,0 +1,3 @@
+T001,Remote Car,Electronic,8+,2500.0,10
+T002,Teddy Bear,Soft Toy,3+,1500.0,20
+T003,Building Blocks,Educational,5+,1800.0,15
