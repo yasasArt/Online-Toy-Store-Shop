@@ -8,12 +8,15 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 
+@WebServlet("/register")   // ✅ FIXED
 public class RegisterServlet extends HttpServlet {
 
     private final UserService userService = new UserService();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String fullName = request.getParameter("fullName");
         String email = request.getParameter("email");
         String username = request.getParameter("username");
