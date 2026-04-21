@@ -1,67 +1,70 @@
 package com.toystore.service;
 
 import com.toystore.model.User;
-import com.toystore.util.FileUtil;
+import com.toystore.util.DBConnection;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 
 public class UserService {
 
-    private static final String FILE_NAME = "users.txt";
-
     public boolean registerUser(User user) {
-        if (findUserByUsername(user.getUsername()) != null) {
-            return false;
-        }
+        String checkSql = "SELECT * FROM users WHERE username = ?";
+        String insertSql = "INSERT INTO users (full_name, email, username, password, role) VALUES (?, ?, ?, ?, ?)";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FileUtil.getFilePath(FILE_NAME), true))) {
-            writer.write(user.toFileString());
-            writer.newLine();
-            return true;
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement checkPs = conn.prepareStatement(checkSql)) {
+
+            checkPs.setString(1, user.getUsername());
+            ResultSet rs = checkPs.executeQuery();
+
+            if (rs.next()) {
+                return false;
+            }
+
+            try (PreparedStatement insertPs = conn.prepareStatement(insertSql)) {
+                insertPs.setString(1, user.getFullName());
+                insertPs.setString(2, user.getEmail());
+                insertPs.setString(3, user.getUsername());
+                insertPs.setString(4, user.getPassword());
+                insertPs.setString(5, user.getRole());
+
+                return insertPs.executeUpdate() > 0;
+            }
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
+
         return false;
     }
 
     public User login(String username, String password) {
-        List<User> users = getAllUsers();
-        for (User user : users) {
-            if (user.getUsername().equalsIgnoreCase(username) && user.getPassword().equals(password)) {
-                return user;
-            }
-        }
-        return null;
-    }
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
-    public User findUserByUsername(String username) {
-        List<User> users = getAllUsers();
-        for (User user : users) {
-            if (user.getUsername().equalsIgnoreCase(username)) {
-                return user;
-            }
-        }
-        return null;
-    }
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-    public List<User> getAllUsers() {
-        List<User> users = new ArrayList<>();
+            ps.setString(1, username);
+            ps.setString(2, password);
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(FileUtil.getFilePath(FILE_NAME)))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] data = line.split(",");
-                if (data.length == 5) {
-                    User user = new User(data[0], data[1], data[2], data[3], data[4]);
-                    users.add(user);
-                }
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new User(
+                        rs.getString("full_name"),
+                        rs.getString("email"),
+                        rs.getString("username"),
+                        rs.getString("password"),
+                        rs.getString("role")
+                );
             }
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return users;
+        return null;
     }
 }
