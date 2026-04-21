@@ -8,36 +8,207 @@
     }
 %>
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Online Toy Store Dashboard</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #fff6e9, #ffe0f0, #e6f7ff);
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+        }
+
+        .navbar-custom {
+            background: linear-gradient(90deg, #ff6b6b, #ff9f43);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: white !important;
+        }
+
+        .dashboard-header {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin-top: 30px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+        }
+
+        .welcome-title {
+            font-weight: bold;
+            color: #ff6b6b;
+        }
+
+        .user-badge {
+            display: inline-block;
+            background: linear-gradient(90deg, #6c5ce7, #00b894);
+            color: white;
+            padding: 8px 18px;
+            border-radius: 30px;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .info-card {
+            border: none;
+            border-radius: 18px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            height: 100%;
+        }
+
+        .info-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 30px rgba(0,0,0,0.15);
+        }
+
+        .card-icon {
+            font-size: 2.4rem;
+            margin-bottom: 15px;
+        }
+
+        .btn-custom {
+            border-radius: 12px;
+            font-weight: bold;
+            padding: 12px;
+        }
+
+        .section-title {
+            font-weight: bold;
+            color: #444;
+            margin-top: 35px;
+            margin-bottom: 20px;
+        }
+
+        .profile-box {
+            background: #ffffff;
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+            margin-top: 25px;
+        }
+
+        .profile-box p {
+            margin-bottom: 10px;
+            font-size: 15px;
+        }
+
+        .footer-note {
+            text-align: center;
+            color: #666;
+            margin-top: 30px;
+            padding-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
-<div class="container mt-5">
-    <h2>Welcome, <%= loggedUser.getFullName() %></h2>
-    <p>Username: <%= loggedUser.getUsername() %></p>
-    <p>Role: <%= loggedUser.getRole() %></p>
 
-    <div class="row g-3 mt-3">
-        <div class="col-md-4">
-            <a href="viewToys" class="btn btn-primary w-100">View Toys</a>
+<nav class="navbar navbar-expand-lg navbar-custom">
+    <div class="container">
+        <a class="navbar-brand" href="#">
+            <i class="bi bi-controller"></i> Online Toy Store
+        </a>
+        <div class="ms-auto">
+            <a href="logout" class="btn btn-light fw-bold rounded-pill px-4">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </a>
         </div>
-        <div class="col-md-4">
-            <a href="addToy.jsp" class="btn btn-success w-100">Add Toy</a>
-        </div>
-        <div class="col-md-4">
-            <a href="searchToy.jsp" class="btn btn-warning w-100">Search Toy</a>
-        </div>
-        <div class="col-md-6">
-            <a href="updateToy.jsp" class="btn btn-info w-100">Update Toy</a>
-        </div>
-        <div class="col-md-6">
-            <a href="deleteToy.jsp" class="btn btn-danger w-100">Delete Toy</a>
+    </div>
+</nav>
+
+<div class="container">
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="welcome-title">Welcome, <%= loggedUser.getFullName() %> 🎉</h2>
+                <p class="text-muted mb-1">Manage your toy store easily from one place.</p>
+                <span class="user-badge">
+                    <i class="bi bi-person-circle"></i> <%= loggedUser.getRole() %>
+                </span>
+            </div>
+            <div class="col-md-4 text-md-end text-center mt-3 mt-md-0">
+                <img src="https://cdn-icons-png.flaticon.com/512/3081/3081559.png" alt="Toy Store" width="110">
+            </div>
         </div>
     </div>
 
-    <a href="logout" class="btn btn-dark mt-4">Logout</a>
+    <div class="profile-box">
+        <h5 class="mb-3"><i class="bi bi-person-vcard"></i> User Information</h5>
+        <p><strong>Full Name:</strong> <%= loggedUser.getFullName() %></p>
+        <p><strong>Username:</strong> <%= loggedUser.getUsername() %></p>
+        <p><strong>Role:</strong> <%= loggedUser.getRole() %></p>
+    </div>
+
+    <h4 class="section-title"><i class="bi bi-grid-fill"></i> Dashboard Actions</h4>
+
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card info-card text-center p-4">
+                <div class="card-body">
+                    <div class="card-icon text-primary"><i class="bi bi-bag-fill"></i></div>
+                    <h5 class="card-title">View Toys</h5>
+                    <p class="card-text text-muted">See all toys available in the store.</p>
+                    <a href="viewToys" class="btn btn-primary btn-custom w-100">Open</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card info-card text-center p-4">
+                <div class="card-body">
+                    <div class="card-icon text-success"><i class="bi bi-plus-circle-fill"></i></div>
+                    <h5 class="card-title">Add Toy</h5>
+                    <p class="card-text text-muted">Add new toy items into the system.</p>
+                    <a href="addToy.jsp" class="btn btn-success btn-custom w-100">Open</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card info-card text-center p-4">
+                <div class="card-body">
+                    <div class="card-icon text-warning"><i class="bi bi-search"></i></div>
+                    <h5 class="card-title">Search Toy</h5>
+                    <p class="card-text text-muted">Find toy details quickly by keyword.</p>
+                    <a href="searchToy.jsp" class="btn btn-warning btn-custom w-100">Open</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card info-card text-center p-4">
+                <div class="card-body">
+                    <div class="card-icon text-info"><i class="bi bi-pencil-square"></i></div>
+                    <h5 class="card-title">Update Toy</h5>
+                    <p class="card-text text-muted">Edit toy details and update store information.</p>
+                    <a href="updateToy.jsp" class="btn btn-info btn-custom w-100 text-white">Open</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card info-card text-center p-4">
+                <div class="card-body">
+                    <div class="card-icon text-danger"><i class="bi bi-trash-fill"></i></div>
+                    <h5 class="card-title">Delete Toy</h5>
+                    <p class="card-text text-muted">Remove toy items that are no longer available.</p>
+                    <a href="deleteToy.jsp" class="btn btn-danger btn-custom w-100">Open</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer-note">
+        <p>Online Toy Store Management System | Object Oriented Programming Project</p>
+    </div>
 </div>
+
 </body>
 </html>
