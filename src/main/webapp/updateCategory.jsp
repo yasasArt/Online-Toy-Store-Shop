@@ -1,3 +1,4 @@
+<%@ page import="com.toystore.model.Category" %>
 <%@ page contentType="text/html;charset=UTF-8" %>
 <!DOCTYPE html>
 <html>
@@ -25,30 +26,53 @@
 <div class="container py-4">
     <div class="page-header">
         <h2>Update Category</h2>
-        <p class="page-subtitle">Edit an existing category</p>
+        <p class="page-subtitle">Search a category and update its details</p>
     </div>
 
-    <div class="content-card">
+    <div class="content-card mb-4">
         <%
             String message = (String) request.getAttribute("message");
+            Category category = (Category) request.getAttribute("category");
             if (message != null) {
         %>
         <div class="alert alert-info"><%= message %></div>
         <% } %>
 
+        <h5 class="mb-3">Find Category</h5>
+        <form action="updateCategory" method="get" class="row g-3">
+            <div class="col-md-9">
+                <label class="form-label">Category ID</label>
+                <input type="text" name="categoryId" class="form-control" placeholder="Enter category ID to search" required>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">Search</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="content-card">
+        <h5 class="mb-3">Category Details</h5>
+
         <form action="updateCategory" method="post">
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Category ID</label>
-                    <input type="text" name="categoryId" class="form-control" placeholder="Enter category ID" required>
+                    <input type="text" name="categoryId" class="form-control"
+                           value="<%= category != null ? category.getCategoryId() : "" %>" readonly required>
                 </div>
+
                 <div class="col-md-6 mb-3">
                     <label class="form-label">Category Name</label>
-                    <input type="text" name="categoryName" class="form-control" placeholder="Enter category name" required>
+                    <input type="text" name="categoryName" class="form-control"
+                           value="<%= category != null ? category.getCategoryName() : "" %>"
+                           placeholder="Category name" required>
                 </div>
+
                 <div class="col-md-12 mb-3">
                     <label class="form-label">Description</label>
-                    <input type="text" name="description" class="form-control" placeholder="Enter description" required>
+                    <input type="text" name="description" class="form-control"
+                           value="<%= category != null ? category.getDescription() : "" %>"
+                           placeholder="Description" required>
                 </div>
             </div>
 

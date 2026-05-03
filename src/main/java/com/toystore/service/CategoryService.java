@@ -1,46 +1,53 @@
 package com.toystore.service;
 
 import com.toystore.model.Category;
-import com.toystore.util.FileUtil;
+import com.toystore.util.DBConnection;
 
-import java.io.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CategoryService {
-    private static final String FILE_NAME = "categories.txt";
 
     public boolean addCategory(Category category) {
-        if (searchCategoryById(category.getCategoryId()) != null) {
-            return false;
-        }
+        String sql = "INSERT INTO categories (category_id, category_name, description) VALUES (?, ?, ?)";
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FileUtil.getFilePath(FILE_NAME), true))) {
-            bw.write(category.toFileString());
-            bw.newLine();
-            return true;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category.getCategoryId());
+            ps.setString(2, category.getCategoryName());
+            ps.setString(3, category.getDescription());
+
+            int rowsInserted = ps.executeUpdate();
+            System.out.println("Inserted category rows: " + rowsInserted);
+
+            return rowsInserted > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return false;
     }
 
     public List<Category> getAllCategories() {
         List<Category> categoryList = new ArrayList<>();
+        String sql = "SELECT * FROM categories";
 
-        try (BufferedReader br = new BufferedReader(new FileReader(FileUtil.getFilePath(FILE_NAME)))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                if (d.length == 3) {
-                    Category category = new Category(
-                            d[0],
-                            d[1],
-                            d[2]
-                    );
-                    categoryList.add(category);
-                }
+        try (Connection conn = DBConnection.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Category category = new Category(
+                        rs.getString("category_id"),
+                        rs.getString("category_name"),
+                        rs.getString("description")
+                );
+                categoryList.add(category);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -49,46 +56,61 @@ public class CategoryService {
     }
 
     public Category searchCategoryById(String categoryId) {
-        for (Category category : getAllCategories()) {
-            if (category.getCategoryId().equalsIgnoreCase(categoryId)) {
-                return category;
+        String sql = "SELECT * FROM categories WHERE category_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, categoryId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Category(
+                        rs.getString("category_id"),
+                        rs.getString("category_name"),
+                        rs.getString("description")
+                );
             }
-        }
-        return null;
-    }
 
-    public boolean updateCategory(Category updatedCategory) {
-        List<Category> categories = getAllCategories();
-        boolean found = false;
-
-        for (Category category : categories) {
-            if (category.getCategoryId().equalsIgnoreCase(updatedCategory.getCategoryId())) {
-                category.setCategoryName(updatedCategory.getCategoryName());
-                category.setDescription(updatedCategory.getDescription());
-                found = true;
-                break;
-            }
-        }
-
-        return found && writeAllCategories(categories);
-    }
-
-    public boolean deleteCategory(String categoryId) {
-        List<Category> categories = getAllCategories();
-        boolean removed = categories.removeIf(category -> category.getCategoryId().equalsIgnoreCase(categoryId));
-        return removed && writeAllCategories(categories);
-    }
-
-    private boolean writeAllCategories(List<Category> categories) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FileUtil.getFilePath(FILE_NAME), false))) {
-            for (Category category : categories) {
-                bw.write(category.toFileString());
-                bw.newLine();
-            }
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return null;
+    }
+
+    public boolean updateCategory(Category category) {
+        String sql = "UPDATE categories SET category_name = ?, description = ? WHERE category_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, category.getCategoryName());
+            ps.setString(2, category.getDescription());
+            ps.setString(3, category.getCategoryId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean deleteCategory(String categoryId) {
+        String sql = "DELETE FROM categories WHERE category_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, categoryId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return false;
     }
 }
