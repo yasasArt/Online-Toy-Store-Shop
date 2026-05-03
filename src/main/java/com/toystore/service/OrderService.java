@@ -1,48 +1,57 @@
 package com.toystore.service;
 
 import com.toystore.model.Order;
-import com.toystore.util.FileUtil;
+import com.toystore.util.DBConnection;
 
-import java.io.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderService {
-    private static final String FILE_NAME = "orders.txt";
 
     public boolean addOrder(Order order) {
-        if (searchOrderById(order.getOrderId()) != null) {
-            return false;
-        }
+        String sql = "INSERT INTO orders (order_id, customer_name, toy_id, quantity, status) VALUES (?, ?, ?, ?, ?)";
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FileUtil.getFilePath(FILE_NAME), true))) {
-            bw.write(order.toFileString());
-            bw.newLine();
-            return true;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, order.getOrderId());
+            ps.setString(2, order.getCustomerName());
+            ps.setString(3, order.getToyId());
+            ps.setInt(4, order.getQuantity());
+            ps.setString(5, order.getStatus());
+
+            int rowsInserted = ps.executeUpdate();
+            System.out.println("Inserted rows: " + rowsInserted);
+
+            return rowsInserted > 0;
+
         } catch (Exception e) {
             e.printStackTrace();
         }
+
         return false;
     }
 
     public List<Order> getAllOrders() {
         List<Order> orderList = new ArrayList<>();
+        String sql = "SELECT * FROM orders";
 
-        try (BufferedReader br = new BufferedReader(new FileReader(FileUtil.getFilePath(FILE_NAME)))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(",");
-                if (d.length == 5) {
-                    Order order = new Order(
-                            d[0],
-                            d[1],
-                            d[2],
-                            Integer.parseInt(d[3]),
-                            d[4]
-                    );
-                    orderList.add(order);
-                }
+        try (Connection conn = DBConnection.getConnection();
+             Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+
+            while (rs.next()) {
+                Order order = new Order(
+                        rs.getString("order_id"),
+                        rs.getString("customer_name"),
+                        rs.getString("toy_id"),
+                        rs.getInt("quantity"),
+                        rs.getString("status")
+                );
+                orderList.add(order);
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,48 +60,65 @@ public class OrderService {
     }
 
     public Order searchOrderById(String orderId) {
-        for (Order order : getAllOrders()) {
-            if (order.getOrderId().equalsIgnoreCase(orderId)) {
-                return order;
+        String sql = "SELECT * FROM orders WHERE order_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, orderId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return new Order(
+                        rs.getString("order_id"),
+                        rs.getString("customer_name"),
+                        rs.getString("toy_id"),
+                        rs.getInt("quantity"),
+                        rs.getString("status")
+                );
             }
-        }
-        return null;
-    }
 
-    public boolean updateOrder(Order updatedOrder) {
-        List<Order> orders = getAllOrders();
-        boolean found = false;
-
-        for (Order order : orders) {
-            if (order.getOrderId().equalsIgnoreCase(updatedOrder.getOrderId())) {
-                order.setCustomerName(updatedOrder.getCustomerName());
-                order.setToyId(updatedOrder.getToyId());
-                order.setQuantity(updatedOrder.getQuantity());
-                order.setStatus(updatedOrder.getStatus());
-                found = true;
-                break;
-            }
-        }
-
-        return found && writeAllOrders(orders);
-    }
-
-    public boolean deleteOrder(String orderId) {
-        List<Order> orders = getAllOrders();
-        boolean removed = orders.removeIf(order -> order.getOrderId().equalsIgnoreCase(orderId));
-        return removed && writeAllOrders(orders);
-    }
-
-    private boolean writeAllOrders(List<Order> orders) {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FileUtil.getFilePath(FILE_NAME), false))) {
-            for (Order order : orders) {
-                bw.write(order.toFileString());
-                bw.newLine();
-            }
-            return true;
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        return null;
+    }
+
+    public boolean updateOrder(Order order) {
+        String sql = "UPDATE orders SET customer_name=?, toy_id=?, quantity=?, status=? WHERE order_id=?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, order.getCustomerName());
+            ps.setString(2, order.getToyId());
+            ps.setInt(3, order.getQuantity());
+            ps.setString(4, order.getStatus());
+            ps.setString(5, order.getOrderId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    public boolean deleteOrder(String orderId) {
+        String sql = "DELETE FROM orders WHERE order_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, orderId);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
         return false;
     }
 }
