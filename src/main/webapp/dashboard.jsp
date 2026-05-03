@@ -33,6 +33,37 @@
             color: white !important;
         }
 
+        .navbar-nav .nav-link {
+            color: white !important;
+            font-weight: 600;
+            margin-right: 10px;
+            padding: 8px 14px !important;
+            border-radius: 10px;
+            transition: 0.3s ease;
+        }
+
+        .navbar-nav .nav-link:hover,
+        .navbar-nav .nav-link.active {
+            background: rgba(255,255,255,0.18);
+        }
+
+        .dropdown-menu {
+            border: none;
+            border-radius: 14px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+            padding: 10px;
+        }
+
+        .dropdown-item {
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-weight: 500;
+        }
+
+        .dropdown-item:hover {
+            background: #fff1f1;
+        }
+
         .dashboard-header {
             background: white;
             border-radius: 20px;
@@ -112,13 +143,65 @@
 
 <nav class="navbar navbar-expand-lg navbar-custom">
     <div class="container">
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="dashboard.jsp">
             <i class="bi bi-controller"></i> Online Toy Store
         </a>
-        <div class="ms-auto">
-            <a href="logout" class="btn btn-light fw-bold rounded-pill px-4">
-                <i class="bi bi-box-arrow-right"></i> Logout
-            </a>
+
+        <button class="navbar-toggler bg-light" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav mx-auto">
+                <li class="nav-item">
+                    <a class="nav-link active" href="dashboard.jsp">
+                        <i class="bi bi-house-door-fill"></i> Dashboard
+                    </a>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-bag-fill"></i> Toys
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="viewToys"><i class="bi bi-grid"></i> View Toys</a></li>
+                        <li><a class="dropdown-item" href="addToy.jsp"><i class="bi bi-plus-circle"></i> Add Toy</a></li>
+                        <li><a class="dropdown-item" href="searchToy.jsp"><i class="bi bi-search"></i> Search Toy</a></li>
+                        <li><a class="dropdown-item" href="updateToy.jsp"><i class="bi bi-pencil-square"></i> Update Toy</a></li>
+                        <li><a class="dropdown-item" href="deleteToy.jsp"><i class="bi bi-trash"></i> Delete Toy</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-cart-fill"></i> Orders
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="addOrder.jsp"><i class="bi bi-plus-circle"></i> Add Order</a></li>
+                        <li><a class="dropdown-item" href="viewOrders"><i class="bi bi-list-ul"></i> View Orders</a></li>
+                        <li><a class="dropdown-item" href="updateOrder.jsp"><i class="bi bi-pencil-square"></i> Update Order</a></li>
+                        <li><a class="dropdown-item" href="deleteOrder.jsp"><i class="bi bi-trash"></i> Delete Order</a></li>
+                    </ul>
+                </li>
+
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-tags-fill"></i> Categories
+                    </a>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="addCategory.jsp"><i class="bi bi-plus-circle"></i> Add Category</a></li>
+                        <li><a class="dropdown-item" href="viewCategories"><i class="bi bi-list-ul"></i> View Categories</a></li>
+                        <li><a class="dropdown-item" href="updateCategory.jsp"><i class="bi bi-pencil-square"></i> Update Category</a></li>
+                        <li><a class="dropdown-item" href="deleteCategory.jsp"><i class="bi bi-trash"></i> Delete Category</a></li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="ms-auto">
+                <a href="logout" class="btn btn-light fw-bold rounded-pill px-4">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </a>
+            </div>
         </div>
     </div>
 </nav>
@@ -146,7 +229,7 @@
         <p><strong>Role:</strong> <%= loggedUser.getRole() %></p>
     </div>
 
-    <h4 class="section-title"><i class="bi bi-grid-fill"></i> Dashboard Actions</h4>
+    <h4 class="section-title"><i class="bi bi-grid-fill"></i> Quick Actions</h4>
 
     <div class="row g-4">
         <div class="col-md-4">
@@ -181,28 +264,6 @@
                 </div>
             </div>
         </div>
-
-        <div class="col-md-6">
-            <div class="card info-card text-center p-4">
-                <div class="card-body">
-                    <div class="card-icon text-info"><i class="bi bi-pencil-square"></i></div>
-                    <h5 class="card-title">Update Toy</h5>
-                    <p class="card-text text-muted">Edit toy details and update store information.</p>
-                    <a href="updateToy.jsp" class="btn btn-info btn-custom w-100 text-white">Open</a>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-6">
-            <div class="card info-card text-center p-4">
-                <div class="card-body">
-                    <div class="card-icon text-danger"><i class="bi bi-trash-fill"></i></div>
-                    <h5 class="card-title">Delete Toy</h5>
-                    <p class="card-text text-muted">Remove toy items that are no longer available.</p>
-                    <a href="deleteToy.jsp" class="btn btn-danger btn-custom w-100">Open</a>
-                </div>
-            </div>
-        </div>
     </div>
 
     <div class="footer-note">
@@ -210,5 +271,6 @@
     </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
