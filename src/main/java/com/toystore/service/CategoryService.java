@@ -19,10 +19,7 @@ public class CategoryService {
             ps.setString(2, category.getCategoryName());
             ps.setString(3, category.getDescription());
 
-            int rowsInserted = ps.executeUpdate();
-            System.out.println("Inserted category rows: " + rowsInserted);
-
-            return rowsInserted > 0;
+            return ps.executeUpdate() > 0;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,6 +42,7 @@ public class CategoryService {
                         rs.getString("category_name"),
                         rs.getString("description")
                 );
+
                 categoryList.add(category);
             }
 
@@ -62,14 +60,15 @@ public class CategoryService {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, categoryId);
-            ResultSet rs = ps.executeQuery();
 
-            if (rs.next()) {
-                return new Category(
-                        rs.getString("category_id"),
-                        rs.getString("category_name"),
-                        rs.getString("description")
-                );
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Category(
+                            rs.getString("category_id"),
+                            rs.getString("category_name"),
+                            rs.getString("description")
+                    );
+                }
             }
 
         } catch (Exception e) {
@@ -105,6 +104,7 @@ public class CategoryService {
              PreparedStatement ps = conn.prepareStatement(sql)) {
 
             ps.setString(1, categoryId);
+
             return ps.executeUpdate() > 0;
 
         } catch (Exception e) {

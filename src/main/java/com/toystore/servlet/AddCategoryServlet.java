@@ -13,7 +13,9 @@ public class AddCategoryServlet extends HttpServlet {
     private final CategoryService categoryService = new CategoryService();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String categoryId = request.getParameter("categoryId");
         String categoryName = request.getParameter("categoryName");
         String description = request.getParameter("description");
@@ -28,6 +30,6 @@ public class AddCategoryServlet extends HttpServlet {
             request.setAttribute("message", "Category ID already exists.");
         }
 
-        request.getRequestDispatcher("addCategory.jsp").forward(request, response);
+        request.getRequestDispatcher("admin/addCategory.jsp").forward(request, response);
     }
 }

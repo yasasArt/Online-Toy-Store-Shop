@@ -14,6 +14,20 @@ public class Category {
         this.description = description;
     }
 
+    public String toFileString() {
+        return categoryId + "," + categoryName + "," + description;
+    }
+
+    public static Category fromFileString(String line) {
+        String[] data = line.split(",", -1);
+
+        if (data.length < 3) {
+            return null;
+        }
+
+        return new Category(data[0], data[1], data[2]);
+    }
+
     public String getCategoryId() {
         return categoryId;
     }
@@ -36,9 +50,5 @@ public class Category {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String toFileString() {
-        return categoryId + "," + categoryName + "," + description;
     }
 }

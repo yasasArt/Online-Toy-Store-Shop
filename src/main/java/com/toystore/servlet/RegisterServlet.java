@@ -8,9 +8,8 @@ import jakarta.servlet.http.*;
 
 import java.io.IOException;
 
-@WebServlet("/register")   // ✅ FIXED
+@WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
-
     private final UserService userService = new UserService();
 
     @Override
@@ -21,17 +20,20 @@ public class RegisterServlet extends HttpServlet {
         String email = request.getParameter("email");
         String username = request.getParameter("username");
         String password = request.getParameter("password");
+        String phone = request.getParameter("phone");
+        String address = request.getParameter("address");
+
         String role = "customer";
+        String userId = userService.generateUserId(role);
 
-        User user = new User(fullName, email, username, password, role);
+        User user = new User(userId, fullName, email, username, password, role, phone, address);
 
-        boolean success = userService.registerUser(user);
+        boolean success = userService.addUser(user);
 
         if (success) {
-            request.setAttribute("message", "Registration successful. Please login.");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
+            response.sendRedirect("login.jsp?success=registered");
         } else {
-            request.setAttribute("message", "Username already exists.");
+            request.setAttribute("error", "Username already exists!");
             request.getRequestDispatcher("register.jsp").forward(request, response);
         }
     }

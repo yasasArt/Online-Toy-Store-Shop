@@ -1,32 +1,41 @@
 package com.toystore.service;
 
 import com.toystore.model.Order;
-import com.toystore.util.DBConnection;
 
-import java.sql.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class OrderService {
+    private static final String FILE_PATH = "data/orders.txt";
+
+    public OrderService() {
+        createFileIfNotExists();
+    }
+
+    private void createFileIfNotExists() {
+        try {
+            File file = new File(FILE_PATH);
+            File parent = file.getParentFile();
+
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
+            }
+
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public boolean addOrder(Order order) {
-        String sql = "INSERT INTO orders (order_id, customer_name, toy_id, quantity, status) VALUES (?, ?, ?, ?, ?)";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, order.getOrderId());
-            ps.setString(2, order.getCustomerName());
-            ps.setString(3, order.getToyId());
-            ps.setInt(4, order.getQuantity());
-            ps.setString(5, order.getStatus());
-
-            int rowsInserted = ps.executeUpdate();
-            System.out.println("Inserted rows: " + rowsInserted);
-
-            return rowsInserted > 0;
-
-        } catch (Exception e) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+            writer.write(order.toFileString());
+            writer.newLine();
+            return true;
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -34,91 +43,119 @@ public class OrderService {
     }
 
     public List<Order> getAllOrders() {
-        List<Order> orderList = new ArrayList<>();
-        String sql = "SELECT * FROM orders";
+        List<Order> orders = new ArrayList<>();
 
-        try (Connection conn = DBConnection.getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
 
-            while (rs.next()) {
-                Order order = new Order(
-                        rs.getString("order_id"),
-                        rs.getString("customer_name"),
-                        rs.getString("toy_id"),
-                        rs.getInt("quantity"),
-                        rs.getString("status")
-                );
-                orderList.add(order);
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    Order order = Order.fromFileString(line);
+                    if (order != null) {
+                        orders.add(order);
+                    }
+                }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return orderList;
+        return orders;
     }
 
-    public Order searchOrderById(String orderId) {
-        String sql = "SELECT * FROM orders WHERE order_id = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, orderId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return new Order(
-                        rs.getString("order_id"),
-                        rs.getString("customer_name"),
-                        rs.getString("toy_id"),
-                        rs.getInt("quantity"),
-                        rs.getString("status")
-                );
+    public Order getOrderById(String orderId) {
+        for (Order order : getAllOrders()) {
+            if (order.getOrderId().equalsIgnoreCase(orderId)) {
+                return order;
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return null;
     }
 
-    public boolean updateOrder(Order order) {
-        String sql = "UPDATE orders SET customer_name=?, toy_id=?, quantity=?, status=? WHERE order_id=?";
+    public List<Order> getOrdersByCustomer(String username) {
+        List<Order> customerOrders = new ArrayList<>();
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        for (Order order : getAllOrders()) {
+            if (order.getCustomerUsername().equalsIgnoreCase(username)) {
+                customerOrders.add(order);
+            }
+        }
 
-            ps.setString(1, order.getCustomerName());
-            ps.setString(2, order.getToyId());
-            ps.setInt(3, order.getQuantity());
-            ps.setString(4, order.getStatus());
-            ps.setString(5, order.getOrderId());
+        return customerOrders;
+    }
 
-            return ps.executeUpdate() > 0;
+    public boolean updateOrder(Order updatedOrder) {
+        List<Order> orders = getAllOrders();
+        boolean updated = false;
 
-        } catch (Exception e) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Order order : orders) {
+                if (order.getOrderId().equalsIgnoreCase(updatedOrder.getOrderId())) {
+                    writer.write(updatedOrder.toFileString());
+                    updated = true;
+                } else {
+                    writer.write(order.toFileString());
+                }
+                writer.newLine();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return false;
+        return updated;
+    }
+
+    public boolean updateOrderStatus(String orderId, String status) {
+        Order order = getOrderById(orderId);
+
+        if (order == null) {
+            return false;
+        }
+
+        order.setStatus(status);
+        return updateOrder(order);
     }
 
     public boolean deleteOrder(String orderId) {
-        String sql = "DELETE FROM orders WHERE order_id = ?";
+        List<Order> orders = getAllOrders();
+        boolean deleted = false;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, orderId);
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Order order : orders) {
+                if (!order.getOrderId().equalsIgnoreCase(orderId)) {
+                    writer.write(order.toFileString());
+                    writer.newLine();
+                } else {
+                    deleted = true;
+                }
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return false;
+        return deleted;
+    }
+
+    public int getTotalOrders() {
+        return getAllOrders().size();
+    }
+
+    public double getTotalSales() {
+        double total = 0;
+
+        for (Order order : getAllOrders()) {
+            if (!"Cancelled".equalsIgnoreCase(order.getStatus())) {
+                total += order.getTotalAmount();
+            }
+        }
+
+        return total;
+    }
+
+    public String generateOrderId() {
+        int count = getAllOrders().size() + 1;
+        return "ORD" + String.format("%03d", count);
     }
 }

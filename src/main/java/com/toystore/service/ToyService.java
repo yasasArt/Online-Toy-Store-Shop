@@ -1,44 +1,45 @@
 package com.toystore.service;
 
 import com.toystore.model.Toy;
-import com.toystore.util.DBConnection;
 
-import java.sql.*;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ToyService {
+    private static final String FILE_PATH = "data/toys.txt";
 
-    public boolean addToy(Toy toy) {
-        String sql = "INSERT INTO toys (toy_id, toy_name, category, age_group, price, quantity) VALUES (?, ?, ?, ?, ?, ?)";
+    public ToyService() {
+        createFileIfNotExists();
+    }
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+    private void createFileIfNotExists() {
+        try {
+            File file = new File(FILE_PATH);
+            File parent = file.getParentFile();
 
-            if (conn == null) {
-                System.out.println("Database connection failed.");
-                return false;
+            if (parent != null && !parent.exists()) {
+                parent.mkdirs();
             }
 
-            System.out.println("Database connected successfully.");
-
-            ps.setString(1, toy.getToyId());
-            ps.setString(2, toy.getToyName());
-            ps.setString(3, toy.getCategory());
-            ps.setString(4, toy.getAgeGroup());
-            ps.setDouble(5, toy.getPrice());
-            ps.setInt(6, toy.getQuantity());
-
-            int rowsInserted = ps.executeUpdate();
-            System.out.println("Rows inserted: " + rowsInserted);
-
-            return rowsInserted > 0;
-
-        } catch (SQLException e) {
-            System.out.println("SQL error while inserting toy.");
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
-        } catch (Exception e) {
-            System.out.println("Unexpected error while inserting toy.");
+        }
+    }
+
+    public boolean addToy(Toy toy) {
+        if (getToyById(toy.getToyId()) != null) {
+            return false;
+        }
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+            writer.write(toy.toFileString());
+            writer.newLine();
+            return true;
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -47,93 +48,111 @@ public class ToyService {
 
     public List<Toy> getAllToys() {
         List<Toy> toys = new ArrayList<>();
-        String sql = "SELECT * FROM toys";
 
-        try (Connection conn = DBConnection.getConnection();
-             Statement st = conn.createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
+            String line;
 
-            while (rs.next()) {
-                Toy toy = new Toy(
-                        rs.getString("toy_id"),
-                        rs.getString("toy_name"),
-                        rs.getString("category"),
-                        rs.getString("age_group"),
-                        rs.getDouble("price"),
-                        rs.getInt("quantity")
-                );
-                toys.add(toy);
+            while ((line = reader.readLine()) != null) {
+                if (!line.trim().isEmpty()) {
+                    Toy toy = Toy.fromFileString(line);
+                    if (toy != null) {
+                        toys.add(toy);
+                    }
+                }
             }
 
-        } catch (Exception e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
         return toys;
     }
 
-    public Toy searchToyById(String toyId) {
-        String sql = "SELECT * FROM toys WHERE toy_id = ?";
-
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, toyId);
-            ResultSet rs = ps.executeQuery();
-
-            if (rs.next()) {
-                return new Toy(
-                        rs.getString("toy_id"),
-                        rs.getString("toy_name"),
-                        rs.getString("category"),
-                        rs.getString("age_group"),
-                        rs.getDouble("price"),
-                        rs.getInt("quantity")
-                );
+    public Toy getToyById(String toyId) {
+        for (Toy toy : getAllToys()) {
+            if (toy.getToyId().equalsIgnoreCase(toyId)) {
+                return toy;
             }
-
-        } catch (Exception e) {
-            e.printStackTrace();
         }
 
         return null;
     }
 
-    public boolean updateToy(Toy toy) {
-        String sql = "UPDATE toys SET toy_name=?, category=?, age_group=?, price=?, quantity=? WHERE toy_id=?";
+    public List<Toy> searchToys(String keyword) {
+        List<Toy> result = new ArrayList<>();
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllToys();
+        }
 
-            ps.setString(1, toy.getToyName());
-            ps.setString(2, toy.getCategory());
-            ps.setString(3, toy.getAgeGroup());
-            ps.setDouble(4, toy.getPrice());
-            ps.setInt(5, toy.getQuantity());
-            ps.setString(6, toy.getToyId());
+        String search = keyword.toLowerCase();
 
-            return ps.executeUpdate() > 0;
+        for (Toy toy : getAllToys()) {
+            if (toy.getToyName().toLowerCase().contains(search)
+                    || toy.getCategory().toLowerCase().contains(search)
+                    || toy.getAgeGroup().toLowerCase().contains(search)
+                    || toy.getBrand().toLowerCase().contains(search)) {
+                result.add(toy);
+            }
+        }
 
-        } catch (Exception e) {
+        return result;
+    }
+
+    public boolean updateToy(Toy updatedToy) {
+        List<Toy> toys = getAllToys();
+        boolean updated = false;
+
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Toy toy : toys) {
+                if (toy.getToyId().equalsIgnoreCase(updatedToy.getToyId())) {
+                    writer.write(updatedToy.toFileString());
+                    updated = true;
+                } else {
+                    writer.write(toy.toFileString());
+                }
+                writer.newLine();
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return false;
+        return updated;
     }
 
     public boolean deleteToy(String toyId) {
-        String sql = "DELETE FROM toys WHERE toy_id = ?";
+        List<Toy> toys = getAllToys();
+        boolean deleted = false;
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-
-            ps.setString(1, toyId);
-            return ps.executeUpdate() > 0;
-
-        } catch (Exception e) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+            for (Toy toy : toys) {
+                if (!toy.getToyId().equalsIgnoreCase(toyId)) {
+                    writer.write(toy.toFileString());
+                    writer.newLine();
+                } else {
+                    deleted = true;
+                }
+            }
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return false;
+        return deleted;
+    }
+
+    public boolean reduceStock(String toyId, int quantity) {
+        Toy toy = getToyById(toyId);
+
+        if (toy == null || toy.getQuantity() < quantity) {
+            return false;
+        }
+
+        toy.setQuantity(toy.getQuantity() - quantity);
+        return updateToy(toy);
+    }
+
+    public String generateToyId() {
+        int count = getAllToys().size() + 1;
+        return "T" + String.format("%03d", count);
     }
 }

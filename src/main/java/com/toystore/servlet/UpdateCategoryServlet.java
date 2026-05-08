@@ -13,7 +13,9 @@ public class UpdateCategoryServlet extends HttpServlet {
     private final CategoryService categoryService = new CategoryService();
 
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String categoryId = request.getParameter("categoryId");
 
         if (categoryId != null && !categoryId.trim().isEmpty()) {
@@ -29,7 +31,9 @@ public class UpdateCategoryServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String categoryId = request.getParameter("categoryId");
         String categoryName = request.getParameter("categoryName");
         String description = request.getParameter("description");

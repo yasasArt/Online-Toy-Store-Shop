@@ -10,11 +10,12 @@ import java.io.IOException;
 
 @WebServlet("/login")
 public class LoginServlet extends HttpServlet {
-
     private final UserService userService = new UserService();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+
         String username = request.getParameter("username");
         String password = request.getParameter("password");
 
@@ -23,9 +24,16 @@ public class LoginServlet extends HttpServlet {
         if (user != null) {
             HttpSession session = request.getSession();
             session.setAttribute("loggedUser", user);
-            response.sendRedirect("dashboard");
+            session.setAttribute("username", user.getUsername());
+            session.setAttribute("role", user.getRole());
+
+            if ("admin".equalsIgnoreCase(user.getRole())) {
+                response.sendRedirect("admin/adminDashboard.jsp");
+            } else {
+                response.sendRedirect("customer/customerDashboard.jsp");
+            }
         } else {
-            request.setAttribute("message", "Invalid username or password.");
+            request.setAttribute("error", "Invalid username or password!");
             request.getRequestDispatcher("login.jsp").forward(request, response);
         }
     }
