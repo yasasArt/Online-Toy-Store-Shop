@@ -33,6 +33,10 @@
     <main class="content">
         <h1>Customer List</h1>
 
+        <% if ("deleted".equals(request.getParameter("msg"))) { %>
+            <div class="alert success">Customer deleted successfully.</div>
+        <% } %>
+
         <div class="table-panel">
             <table>
                 <thead>
@@ -43,11 +47,13 @@
                     <th>Username</th>
                     <th>Phone</th>
                     <th>Address</th>
+                    <th>Action</th>
                 </tr>
                 </thead>
 
                 <tbody>
-                <% for (User customer : customers) { %>
+                <% if (customers != null && !customers.isEmpty()) {
+                    for (User customer : customers) { %>
                     <tr>
                         <td><%= customer.getUserId() %></td>
                         <td><%= customer.getFullName() %></td>
@@ -55,6 +61,17 @@
                         <td><%= customer.getUsername() %></td>
                         <td><%= customer.getPhone() %></td>
                         <td><%= customer.getAddress() %></td>
+                        <td>
+                            <a class="delete-btn"
+                               href="${pageContext.request.contextPath}/deleteCustomer?username=<%= customer.getUsername() %>"
+                               onclick="return confirm('Are you sure you want to delete this customer?');">
+                                Delete
+                            </a>
+                        </td>
+                    </tr>
+                <% }} else { %>
+                    <tr>
+                        <td colspan="7">No customers found.</td>
                     </tr>
                 <% } %>
                 </tbody>

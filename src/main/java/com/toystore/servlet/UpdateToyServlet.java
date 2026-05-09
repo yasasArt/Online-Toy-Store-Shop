@@ -10,6 +10,7 @@ import java.io.IOException;
 
 @WebServlet("/updateToy")
 public class UpdateToyServlet extends HttpServlet {
+
     private final ToyService toyService = new ToyService();
 
     @Override
@@ -17,14 +18,21 @@ public class UpdateToyServlet extends HttpServlet {
             throws ServletException, IOException {
 
         String toyId = request.getParameter("toyId");
+
+        if (toyId == null || toyId.trim().isEmpty()) {
+            response.sendRedirect(request.getContextPath() + "/viewToys?error=noToyId");
+            return;
+        }
+
         Toy toy = toyService.getToyById(toyId);
 
-        if (toy != null) {
-            request.setAttribute("toy", toy);
-            request.getRequestDispatcher("admin/editToy.jsp").forward(request, response);
-        } else {
-            response.sendRedirect("viewToys?error=toyNotFound");
+        if (toy == null) {
+            response.sendRedirect(request.getContextPath() + "/viewToys?error=toyNotFound");
+            return;
         }
+
+        request.setAttribute("toy", toy);
+        request.getRequestDispatcher("/admin/editToy.jsp").forward(request, response);
     }
 
     @Override
@@ -56,9 +64,9 @@ public class UpdateToyServlet extends HttpServlet {
         boolean success = toyService.updateToy(toy);
 
         if (success) {
-            response.sendRedirect("viewToys?msg=toyUpdated");
+            response.sendRedirect(request.getContextPath() + "/viewToys?msg=toyUpdated");
         } else {
-            response.sendRedirect("viewToys?error=updateFailed");
+            response.sendRedirect(request.getContextPath() + "/viewToys?error=updateFailed");
         }
     }
 }

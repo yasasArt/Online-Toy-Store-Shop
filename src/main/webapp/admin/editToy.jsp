@@ -4,14 +4,16 @@
 
 <%
     User loggedUser = (User) session.getAttribute("loggedUser");
+
     if (loggedUser == null || !"admin".equalsIgnoreCase(loggedUser.getRole())) {
-        response.sendRedirect("../login.jsp");
+        response.sendRedirect(request.getContextPath() + "/login.jsp");
         return;
     }
 
     Toy toy = (Toy) request.getAttribute("toy");
+
     if (toy == null) {
-        response.sendRedirect("../viewToys");
+        response.sendRedirect(request.getContextPath() + "/viewToys");
         return;
     }
 %>
@@ -20,23 +22,26 @@
 <html>
 <head>
     <title>Edit Toy</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
 
 <div class="dashboard-layout">
+
     <aside class="sidebar">
         <h2>ToyLand Admin</h2>
-        <a href="adminDashboard.jsp">Dashboard</a>
-        <a href="../viewToys">Manage Toys</a>
-        <a href="../logout" class="logout">Logout</a>
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard.jsp">Dashboard</a>
+        <a href="${pageContext.request.contextPath}/admin/addToy.jsp">Add Toy</a>
+        <a href="${pageContext.request.contextPath}/viewToys">Manage Toys</a>
+        <a href="${pageContext.request.contextPath}/logout" class="logout">Logout</a>
     </aside>
 
     <main class="content">
         <div class="form-panel">
             <h1>Edit Toy</h1>
+            <p class="muted">Update selected toy details.</p>
 
-            <form action="../updateToy" method="post">
+            <form action="${pageContext.request.contextPath}/updateToy" method="post">
                 <input type="hidden" name="toyId" value="<%= toy.getToyId() %>">
 
                 <div class="grid-2">
@@ -83,6 +88,7 @@
             </form>
         </div>
     </main>
+
 </div>
 
 </body>

@@ -29,7 +29,7 @@
         <h2>ToyLand Admin</h2>
         <a href="adminDashboard.jsp">Dashboard</a>
         <a href="addToy.jsp">Add Toy</a>
-        <a href="../viewToys">Manage Toys</a>
+        <a href="editToy.jsp">Manage Toys</a>
         <a href="viewCustomers.jsp">Customers</a>
         <a href="viewOrders.jsp">Orders</a>
         <a href="viewPayments.jsp">Payments</a>
