@@ -23,7 +23,11 @@ public class ViewToysServlet extends HttpServlet {
         request.setAttribute("toyList", toyList);
 
         HttpSession session = request.getSession(false);
-        String role = session != null ? (String) session.getAttribute("role") : null;
+        String role = null;
+
+        if (session != null) {
+            role = (String) session.getAttribute("role");
+        }
 
         if ("admin".equalsIgnoreCase(role)) {
             request.getRequestDispatcher("admin/viewToys.jsp").forward(request, response);

@@ -3,6 +3,7 @@ package com.toystore.servlet;
 import com.toystore.model.CartItem;
 import com.toystore.model.Order;
 import com.toystore.model.Payment;
+import com.toystore.model.User;
 import com.toystore.service.CartService;
 import com.toystore.service.OrderService;
 import com.toystore.service.PaymentService;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @WebServlet("/placeOrder")
 public class PlaceOrderServlet extends HttpServlet {
+
     private final CartService cartService = new CartService();
     private final OrderService orderService = new OrderService();
     private final PaymentService paymentService = new PaymentService();
@@ -28,30 +30,31 @@ public class PlaceOrderServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
 
-        if (session == null || session.getAttribute("username") == null) {
+        if (session == null || session.getAttribute("loggedUser") == null) {
             response.sendRedirect("login.jsp");
             return;
         }
 
-        String username = (String) session.getAttribute("username");
+        User loggedUser = (User) session.getAttribute("loggedUser");
+        String username = loggedUser.getUsername();
+
         String deliveryAddress = request.getParameter("deliveryAddress");
         String paymentMethod = request.getParameter("paymentMethod");
 
         List<CartItem> cartItems = cartService.getCartByCustomer(username);
 
-        if (cartItems.isEmpty()) {
+        if (cartItems == null || cartItems.isEmpty()) {
             response.sendRedirect("customer/cart.jsp?error=emptyCart");
             return;
         }
 
-        boolean allOrdersPlaced = true;
-
         for (CartItem item : cartItems) {
-            boolean stockReduced = toyService.reduceStock(item.getToyId(), item.getQuantity());
 
-            if (!stockReduced) {
-                allOrdersPlaced = false;
-                continue;
+            boolean stockUpdated = toyService.reduceStock(item.getToyId(), item.getQuantity());
+
+            if (!stockUpdated) {
+                response.sendRedirect("customer/cart.jsp?error=stockNotAvailable");
+                return;
             }
 
             String orderId = orderService.generateOrderId();
@@ -83,11 +86,8 @@ public class PlaceOrderServlet extends HttpServlet {
             paymentService.addPayment(payment);
         }
 
-        if (allOrdersPlaced) {
-            cartService.clearCustomerCart(username);
-            response.sendRedirect("customer/myOrders.jsp?msg=orderPlaced");
-        } else {
-            response.sendRedirect("customer/cart.jsp?error=stockIssue");
-        }
+        cartService.clearCustomerCart(username);
+
+        response.sendRedirect("customer/myOrders.jsp?success=orderPlaced");
     }
 }

@@ -1,75 +1,111 @@
 <%@ page import="java.util.List" %>
 <%@ page import="com.toystore.model.*" %>
+<%@ page import="com.toystore.service.ToyService" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%
     User loggedUser = (User) session.getAttribute("loggedUser");
+
     if (loggedUser == null || !"customer".equalsIgnoreCase(loggedUser.getRole())) {
         response.sendRedirect("../login.jsp");
         return;
     }
 
     List<Toy> toyList = (List<Toy>) request.getAttribute("toyList");
+
+    if (toyList == null) {
+        ToyService toyService = new ToyService();
+        String keyword = request.getParameter("keyword");
+        toyList = toyService.searchToys(keyword);
+    }
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
     <title>Toy Catalog</title>
-    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
 
 <div class="dashboard-layout">
+
     <aside class="sidebar customer-side">
         <h2>ToyLand</h2>
         <a href="customerDashboard.jsp">Dashboard</a>
-        <a href="../viewToys">Toy Catalog</a>
+        <a href="${pageContext.request.contextPath}/viewToys">Toy Catalog</a>
         <a href="cart.jsp">My Cart</a>
         <a href="myOrders.jsp">My Orders</a>
-        <a href="../logout" class="logout">Logout</a>
+        <a href="profile.jsp">Profile</a>
+        <a href="${pageContext.request.contextPath}/logout" class="logout">Logout</a>
     </aside>
 
     <main class="content">
         <h1>Toy Catalog</h1>
+        <p class="muted">Browse toys and add your favourite toys to cart.</p>
 
-        <form action="../viewToys" method="get" class="search-bar">
-            <input type="text" name="keyword" placeholder="Search by toy name, category, age group...">
+        <form action="${pageContext.request.contextPath}/viewToys" method="get" class="search-bar">
+            <input type="text" name="keyword" placeholder="Search by toy name, category, age group or brand...">
             <button type="submit">Search</button>
         </form>
 
         <div class="toy-grid">
+
             <% if (toyList != null && !toyList.isEmpty()) {
-                for (Toy toy : toyList) { %>
+                for (Toy toy : toyList) {
 
-                <div class="toy-card">
-                    <img src="<%= toy.getImageUrl() == null || toy.getImageUrl().isEmpty()
-                            ? "https://cdn-icons-png.flaticon.com/512/3082/3082031.png"
-                            : toy.getImageUrl() %>" alt="Toy">
+                    String img = toy.getImageUrl();
+                    if (img == null || img.trim().isEmpty()) {
+                        img = "https://cdn-icons-png.flaticon.com/512/3082/3082031.png";
+                    }
+            %>
 
-                    <h3><%= toy.getToyName() %></h3>
-                    <p><%= toy.getDescription() %></p>
+            <div class="toy-card">
+                <img src="<%= img %>" alt="<%= toy.getToyName() %>">
 
-                    <div class="toy-info">
-                        <span><%= toy.getCategory() %></span>
-                        <span><%= toy.getAgeGroup() %></span>
-                    </div>
+                <h3><%= toy.getToyName() %></h3>
+                <p><%= toy.getDescription() %></p>
 
-                    <h2>Rs. <%= toy.getPrice() %></h2>
-                    <p>Available: <%= toy.getQuantity() %></p>
-
-                    <form action="../addToCart" method="post">
-                        <input type="hidden" name="toyId" value="<%= toy.getToyId() %>">
-                        <input type="number" name="quantity" min="1" max="<%= toy.getQuantity() %>" value="1" required>
-                        <button type="submit">Add to Cart</button>
-                    </form>
+                <div class="toy-info">
+                    <span><%= toy.getCategory() %></span>
+                    <span><%= toy.getAgeGroup() %></span>
                 </div>
 
+                <p><b>Brand:</b> <%= toy.getBrand() %></p>
+                <h2>Rs. <%= toy.getPrice() %></h2>
+                <p><b>Available:</b> <%= toy.getQuantity() %></p>
+
+                <% if (toy.getQuantity() > 0) { %>
+                    <form action="${pageContext.request.contextPath}/addToCart" method="post">
+                        <input type="hidden" name="toyId" value="<%= toy.getToyId() %>">
+
+                        <input type="number"
+                               name="quantity"
+                               min="1"
+                               max="<%= toy.getQuantity() %>"
+                               value="1"
+                               required>
+
+                        <button type="submit">Add to Cart</button>
+                    </form>
+                <% } else { %>
+                    <button disabled>Out of Stock</button>
+                <% } %>
+            </div>
+
             <% }} else { %>
-                <p>No toys available.</p>
+
+            <div class="panel">
+                <h2>No toys available</h2>
+                <p>Please add toys from admin panel first or try another search keyword.</p>
+                <a href="${pageContext.request.contextPath}/viewToys" class="main-btn">View All Toys</a>
+            </div>
+
             <% } %>
+
         </div>
     </main>
+
 </div>
 
 </body>
