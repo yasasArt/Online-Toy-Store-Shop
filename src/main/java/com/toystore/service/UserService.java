@@ -1,62 +1,34 @@
 package com.toystore.service;
 
 import com.toystore.model.User;
+import com.toystore.util.DBConnection;
 
-import java.io.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class UserService {
-    private static final String FILE_PATH = "data/users.txt";
-
-    public UserService() {
-        createFileIfNotExists();
-        createDefaultAdmin();
-    }
-
-    private void createFileIfNotExists() {
-        try {
-            File file = new File(FILE_PATH);
-            File parent = file.getParentFile();
-
-            if (parent != null && !parent.exists()) {
-                parent.mkdirs();
-            }
-
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void createDefaultAdmin() {
-        if (getUserByUsername("admin") == null) {
-            User admin = new User(
-                    "A001",
-                    "System Admin",
-                    "admin@toystore.com",
-                    "admin",
-                    "admin123",
-                    "admin",
-                    "0770000000",
-                    "Toy Store Head Office"
-            );
-            addUser(admin);
-        }
-    }
 
     public boolean addUser(User user) {
-        if (getUserByUsername(user.getUsername()) != null) {
-            return false;
-        }
+        String sql = "INSERT INTO users (user_id, full_name, email, username, password, role, phone, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(user.toFileString());
-            writer.newLine();
-            return true;
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, user.getUserId());
+            ps.setString(2, user.getFullName());
+            ps.setString(3, user.getEmail());
+            ps.setString(4, user.getUsername());
+            ps.setString(5, user.getPassword());
+            ps.setString(6, user.getRole());
+            ps.setString(7, user.getPhone());
+            ps.setString(8, user.getAddress());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (SQLIntegrityConstraintViolationException e) {
+            System.out.println("Username already exists.");
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -64,12 +36,43 @@ public class UserService {
     }
 
     public User login(String username, String password) {
-        List<User> users = getAllUsers();
+        String sql = "SELECT * FROM users WHERE username = ? AND password = ?";
 
-        for (User user : users) {
-            if (user.getUsername().equals(username) && user.checkPassword(password)) {
-                return user;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, password);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapUser(rs);
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return null;
+    }
+
+    public User getUserByUsername(String username) {
+        String sql = "SELECT * FROM users WHERE username = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapUser(rs);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return null;
@@ -77,20 +80,17 @@ public class UserService {
 
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
+        String sql = "SELECT * FROM users";
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    User user = User.fromFileString(line);
-                    if (user != null) {
-                        users.add(user);
-                    }
-                }
+            while (rs.next()) {
+                users.add(mapUser(rs));
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -99,87 +99,93 @@ public class UserService {
 
     public List<User> getAllCustomers() {
         List<User> customers = new ArrayList<>();
+        String sql = "SELECT * FROM users WHERE role = 'customer'";
 
-        for (User user : getAllUsers()) {
-            if ("customer".equalsIgnoreCase(user.getRole())) {
-                customers.add(user);
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            while (rs.next()) {
+                customers.add(mapUser(rs));
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return customers;
     }
 
-    public User getUserByUsername(String username) {
-        for (User user : getAllUsers()) {
-            if (user.getUsername().equalsIgnoreCase(username)) {
-                return user;
-            }
-        }
+    public boolean updateUser(User user) {
+        String sql = "UPDATE users SET full_name=?, email=?, password=?, phone=?, address=? WHERE username=?";
 
-        return null;
-    }
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
 
-    public User getUserById(String userId) {
-        for (User user : getAllUsers()) {
-            if (user.getUserId().equalsIgnoreCase(userId)) {
-                return user;
-            }
-        }
+            ps.setString(1, user.getFullName());
+            ps.setString(2, user.getEmail());
+            ps.setString(3, user.getPassword());
+            ps.setString(4, user.getPhone());
+            ps.setString(5, user.getAddress());
+            ps.setString(6, user.getUsername());
 
-        return null;
-    }
+            return ps.executeUpdate() > 0;
 
-    public boolean updateUser(User updatedUser) {
-        List<User> users = getAllUsers();
-        boolean updated = false;
-
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (User user : users) {
-                if (user.getUsername().equalsIgnoreCase(updatedUser.getUsername())) {
-                    writer.write(updatedUser.toFileString());
-                    updated = true;
-                } else {
-                    writer.write(user.toFileString());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return updated;
+        return false;
     }
 
     public boolean deleteUser(String username) {
-        List<User> users = getAllUsers();
-        boolean deleted = false;
+        String sql = "DELETE FROM users WHERE username=?";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (User user : users) {
-                if (!user.getUsername().equalsIgnoreCase(username)) {
-                    writer.write(user.toFileString());
-                    writer.newLine();
-                } else {
-                    deleted = true;
-                }
-            }
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return deleted;
+        return false;
     }
 
     public String generateUserId(String role) {
         String prefix = "customer".equalsIgnoreCase(role) ? "C" : "A";
-        int count = 1;
+        String sql = "SELECT COUNT(*) FROM users WHERE role=?";
 
-        for (User user : getAllUsers()) {
-            if (user.getRole().equalsIgnoreCase(role)) {
-                count++;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, role);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return prefix + String.format("%03d", rs.getInt(1) + 1);
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return prefix + String.format("%03d", count);
+        return prefix + "001";
+    }
+
+    private User mapUser(ResultSet rs) throws SQLException {
+        return new User(
+                rs.getString("user_id"),
+                rs.getString("full_name"),
+                rs.getString("email"),
+                rs.getString("username"),
+                rs.getString("password"),
+                rs.getString("role"),
+                rs.getString("phone"),
+                rs.getString("address")
+        );
     }
 }

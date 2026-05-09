@@ -1,34 +1,13 @@
 package com.toystore.service;
 
 import com.toystore.model.CartItem;
+import com.toystore.util.DBConnection;
 
-import java.io.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CartService {
-    private static final String FILE_PATH = "data/cart.txt";
-
-    public CartService() {
-        createFileIfNotExists();
-    }
-
-    private void createFileIfNotExists() {
-        try {
-            File file = new File(FILE_PATH);
-            File parent = file.getParentFile();
-
-            if (parent != null && !parent.exists()) {
-                parent.mkdirs();
-            }
-
-            if (!file.exists()) {
-                file.createNewFile();
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
 
     public boolean addToCart(CartItem item) {
         CartItem existingItem = getCartItem(item.getCustomerUsername(), item.getToyId());
@@ -38,11 +17,21 @@ public class CartService {
             return updateCartItem(existingItem);
         }
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-            writer.write(item.toFileString());
-            writer.newLine();
-            return true;
-        } catch (IOException e) {
+        String sql = "INSERT INTO cart (cart_id, customer_username, toy_id, toy_name, price, quantity) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, item.getCartId());
+            ps.setString(2, item.getCustomerUsername());
+            ps.setString(3, item.getToyId());
+            ps.setString(4, item.getToyName());
+            ps.setDouble(5, item.getPrice());
+            ps.setInt(6, item.getQuantity());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -51,20 +40,17 @@ public class CartService {
 
     public List<CartItem> getAllCartItems() {
         List<CartItem> items = new ArrayList<>();
+        String sql = "SELECT * FROM cart";
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
 
-            while ((line = reader.readLine()) != null) {
-                if (!line.trim().isEmpty()) {
-                    CartItem item = CartItem.fromFileString(line);
-                    if (item != null) {
-                        items.add(item);
-                    }
-                }
+            while (rs.next()) {
+                items.add(mapCartItem(rs));
             }
 
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -72,81 +58,95 @@ public class CartService {
     }
 
     public List<CartItem> getCartByCustomer(String username) {
-        List<CartItem> customerCart = new ArrayList<>();
+        List<CartItem> items = new ArrayList<>();
+        String sql = "SELECT * FROM cart WHERE customer_username = ?";
 
-        for (CartItem item : getAllCartItems()) {
-            if (item.getCustomerUsername().equalsIgnoreCase(username)) {
-                customerCart.add(item);
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            while (rs.next()) {
+                items.add(mapCartItem(rs));
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return customerCart;
+        return items;
     }
 
     public CartItem getCartItem(String username, String toyId) {
-        for (CartItem item : getAllCartItems()) {
-            if (item.getCustomerUsername().equalsIgnoreCase(username)
-                    && item.getToyId().equalsIgnoreCase(toyId)) {
-                return item;
+        String sql = "SELECT * FROM cart WHERE customer_username = ? AND toy_id = ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+            ps.setString(2, toyId);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                return mapCartItem(rs);
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return null;
     }
 
-    public boolean updateCartItem(CartItem updatedItem) {
-        List<CartItem> items = getAllCartItems();
-        boolean updated = false;
+    public boolean updateCartItem(CartItem item) {
+        String sql = "UPDATE cart SET quantity = ? WHERE cart_id = ?";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (CartItem item : items) {
-                if (item.getCartId().equalsIgnoreCase(updatedItem.getCartId())) {
-                    writer.write(updatedItem.toFileString());
-                    updated = true;
-                } else {
-                    writer.write(item.toFileString());
-                }
-                writer.newLine();
-            }
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setInt(1, item.getQuantity());
+            ps.setString(2, item.getCartId());
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return updated;
+        return false;
     }
 
     public boolean removeCartItem(String cartId) {
-        List<CartItem> items = getAllCartItems();
-        boolean removed = false;
+        String sql = "DELETE FROM cart WHERE cart_id = ?";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (CartItem item : items) {
-                if (!item.getCartId().equalsIgnoreCase(cartId)) {
-                    writer.write(item.toFileString());
-                    writer.newLine();
-                } else {
-                    removed = true;
-                }
-            }
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, cartId);
+
+            return ps.executeUpdate() > 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
-        return removed;
+        return false;
     }
 
     public boolean clearCustomerCart(String username) {
-        List<CartItem> items = getAllCartItems();
+        String sql = "DELETE FROM cart WHERE customer_username = ?";
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (CartItem item : items) {
-                if (!item.getCustomerUsername().equalsIgnoreCase(username)) {
-                    writer.write(item.toFileString());
-                    writer.newLine();
-                }
-            }
-            return true;
-        } catch (IOException e) {
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+
+            return ps.executeUpdate() >= 0;
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
 
@@ -155,16 +155,52 @@ public class CartService {
 
     public double getCartTotal(String username) {
         double total = 0;
+        String sql = "SELECT SUM(price * quantity) AS total FROM cart WHERE customer_username = ?";
 
-        for (CartItem item : getCartByCustomer(username)) {
-            total += item.getTotal();
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            ps.setString(1, username);
+
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                total = rs.getDouble("total");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return total;
     }
 
     public String generateCartId() {
-        int count = getAllCartItems().size() + 1;
-        return "CART" + String.format("%03d", count);
+        String sql = "SELECT COUNT(*) FROM cart";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return "CART" + String.format("%03d", rs.getInt(1) + 1);
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "CART001";
+    }
+
+    private CartItem mapCartItem(ResultSet rs) throws SQLException {
+        return new CartItem(
+                rs.getString("cart_id"),
+                rs.getString("customer_username"),
+                rs.getString("toy_id"),
+                rs.getString("toy_name"),
+                rs.getDouble("price"),
+                rs.getInt("quantity")
+        );
     }
 }
