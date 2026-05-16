@@ -40,9 +40,7 @@
         New customer? <a href="register.jsp">Create Account</a>
     </p>
 
-    <p class="demo">
-        Admin Demo: <b>admin</b> / <b>admin123</b>
-    </p>
+
 </div>
 
 </body>
