@@ -10,6 +10,7 @@ import java.io.IOException;
 
 @WebServlet("/register")
 public class RegisterServlet extends HttpServlet {
+
     private final UserService userService = new UserService();
 
     @Override
@@ -23,10 +24,37 @@ public class RegisterServlet extends HttpServlet {
         String phone = request.getParameter("phone");
         String address = request.getParameter("address");
 
+        if (fullName == null || !fullName.matches("[A-Za-z ]+")) {
+            request.setAttribute("error", "Full name should contain letters only.");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
+        if (username == null || !username.matches("[A-Za-z]+")) {
+            request.setAttribute("error", "Username should contain letters only.");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
+        if (phone == null || !phone.matches("[0-9]{10}")) {
+            request.setAttribute("error", "Phone number must contain exactly 10 numbers.");
+            request.getRequestDispatcher("register.jsp").forward(request, response);
+            return;
+        }
+
         String role = "customer";
         String userId = userService.generateUserId(role);
 
-        User user = new User(userId, fullName, email, username, password, role, phone, address);
+        User user = new User(
+                userId,
+                fullName,
+                email,
+                username,
+                password,
+                role,
+                phone,
+                address
+        );
 
         boolean success = userService.addUser(user);
 
