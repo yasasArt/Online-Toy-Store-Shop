@@ -21,8 +21,8 @@ public class LoginServlet extends HttpServlet {
 
         User user = userService.login(username, password);
 
-        if (user == null) {
-            request.setAttribute("error", "Invalid username or password!");
+        if (username == null || !username.matches("[A-Za-z]+")) {
+            request.setAttribute("error", "Username should contain letters only.");
             request.getRequestDispatcher("login.jsp").forward(request, response);
             return;
         }

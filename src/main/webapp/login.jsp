@@ -27,8 +27,13 @@
     <% } %>
 
     <form action="login" method="post">
-        <label>Username</label>
-        <input type="text" name="username" required>
+       <label>Username</label>
+       <input type="text"
+              name="username"
+              pattern="[A-Za-z]+"
+              title="Username should contain letters only"
+              oninput="this.value = this.value.replace(/[^A-Za-z]/g, '')"
+              required>
 
         <label>Password</label>
         <input type="password" name="password" required>
