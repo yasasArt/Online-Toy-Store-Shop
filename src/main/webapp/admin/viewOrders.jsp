@@ -25,9 +25,16 @@
 <div class="dashboard-layout">
     <aside class="sidebar">
         <h2>ToyLand Admin</h2>
-        <a href="adminDashboard.jsp">Dashboard</a>
-        <a href="viewOrders.jsp">Orders</a>
-        <a href="../logout" class="logout">Logout</a>
+
+        <a href="${pageContext.request.contextPath}/admin/adminDashboard.jsp">Dashboard</a>
+        <a href="${pageContext.request.contextPath}/admin/addToy.jsp">Add Toy</a>
+        <a href="${pageContext.request.contextPath}/viewToys">Manage Toys</a>
+        <a href="${pageContext.request.contextPath}/admin/viewCustomers.jsp">Customers</a>
+        <a href="${pageContext.request.contextPath}/admin/viewOrders.jsp">Orders</a>
+        <a href="${pageContext.request.contextPath}/admin/viewPayments.jsp">Payments</a>
+        <a href="${pageContext.request.contextPath}/admin/viewReviews.jsp">Reviews</a>
+
+        <a href="${pageContext.request.contextPath}/logout" class="logout">Logout</a>
     </aside>
 
     <main class="content">

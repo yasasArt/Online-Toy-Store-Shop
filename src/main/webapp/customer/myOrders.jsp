@@ -27,10 +27,12 @@
 
     <aside class="sidebar customer-side">
         <h2>ToyLand</h2>
+
         <a href="customerDashboard.jsp">Dashboard</a>
         <a href="../viewToys">Toy Catalog</a>
         <a href="cart.jsp">My Cart</a>
         <a href="myOrders.jsp">My Orders</a>
+        <a href="addReview.jsp">Add Review</a>
         <a href="profile.jsp">Profile</a>
         <a href="../logout" class="logout">Logout</a>
     </aside>
