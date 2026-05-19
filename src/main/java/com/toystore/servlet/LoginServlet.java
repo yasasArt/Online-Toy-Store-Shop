@@ -36,10 +36,6 @@ public class LoginServlet extends HttpServlet {
             response.sendRedirect("admin/adminDashboard.jsp");
         } else if ("customer".equalsIgnoreCase(user.getRole())) {
             response.sendRedirect("customer/customerDashboard.jsp");
-        } else {
-            session.invalidate();
-            request.setAttribute("error", "Unauthorized user role!");
-            request.getRequestDispatcher("login.jsp").forward(request, response);
-        }
+        } 
     }
 }
