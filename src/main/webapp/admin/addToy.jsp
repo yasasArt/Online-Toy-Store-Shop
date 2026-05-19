@@ -1,4 +1,7 @@
 <%@ page import="com.toystore.model.User" %>
+<%@ page import="com.toystore.model.Category" %>
+<%@ page import="com.toystore.service.CategoryService" %>
+<%@ page import="java.util.List" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
 <%
@@ -7,6 +10,9 @@
         response.sendRedirect("../login.jsp");
         return;
     }
+
+    CategoryService categoryService = new CategoryService();
+    List<Category> categoryList = categoryService.getAllCategories();
 %>
 
 <!DOCTYPE html>
@@ -55,8 +61,15 @@
                     </div>
 
                     <div>
-                        <label>Category</label>
-                        <input type="text" name="category" placeholder="Soft Toy / Puzzle / Car" required>
+                        <label>Category <span style="font-weight:normal; font-size:12px;">(<a href="addCategory.jsp">Add New</a>)</span></label>
+                        <select name="category" required>
+                            <option value="">Select Category</option>
+                            <% if (categoryList != null) {
+                                for (Category cat : categoryList) { %>
+                                    <option value="<%= cat.getCategoryName() %>"><%= cat.getCategoryName() %></option>
+                            <%  }
+                               } %>
+                        </select>
                     </div>
 
                     <div>
