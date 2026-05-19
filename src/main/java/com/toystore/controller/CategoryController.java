@@ -8,9 +8,10 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.util.List;
+
 /**
- * Handles: /addCategory, /updateCategory (GET + POST)
- * Replaces: AddCategoryServlet, UpdateCategoryServlet
+ * Handles: /viewCategories, /addCategory, /updateCategory (GET + POST), /deleteCategory
  */
 @Controller
 public class CategoryController {
@@ -18,7 +19,18 @@ public class CategoryController {
     private final CategoryService categoryService = new CategoryService();
 
     // ---------------------------------------------------------------
-    // ADD CATEGORY
+    // VIEW CATEGORIES (GET)
+    // ---------------------------------------------------------------
+    @GetMapping("/viewCategories")
+    public String viewCategories(@RequestParam(required = false) String keyword,
+                                 Model model) {
+        List<Category> categoryList = categoryService.searchCategories(keyword);
+        model.addAttribute("categoryList", categoryList);
+        return "admin/viewCategories";
+    }
+
+    // ---------------------------------------------------------------
+    // ADD CATEGORY (POST)
     // ---------------------------------------------------------------
     @PostMapping("/addCategory")
     public String addCategory(@RequestParam String categoryId,
@@ -30,12 +42,11 @@ public class CategoryController {
         boolean success = categoryService.addCategory(category);
 
         if (success) {
-            model.addAttribute("message", "Category added successfully.");
+            return "redirect:/viewCategories?msg=categoryAdded";
         } else {
             model.addAttribute("message", "Category ID already exists.");
+            return "admin/addCategory";
         }
-
-        return "admin/addCategory";
     }
 
     // ---------------------------------------------------------------
@@ -68,12 +79,20 @@ public class CategoryController {
         boolean success = categoryService.updateCategory(category);
 
         if (success) {
-            model.addAttribute("message", "Category updated successfully.");
-            model.addAttribute("category", category);
+            return "redirect:/viewCategories?msg=categoryUpdated";
         } else {
             model.addAttribute("message", "Category not found.");
+            model.addAttribute("category", category);
+            return "admin/updateCategory";
         }
+    }
 
-        return "admin/updateCategory";
+    // ---------------------------------------------------------------
+    // DELETE CATEGORY (GET)
+    // ---------------------------------------------------------------
+    @GetMapping("/deleteCategory")
+    public String deleteCategory(@RequestParam String categoryId) {
+        categoryService.deleteCategory(categoryId);
+        return "redirect:/viewCategories?msg=categoryDeleted";
     }
 }
