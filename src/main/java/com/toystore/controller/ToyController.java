@@ -14,7 +14,6 @@ import java.util.List;
 
 /**
  * Handles: /viewToys, /addToy, /updateToy (GET + POST), /deleteToy
- * Replaces: ViewToysServlet, AddToyServlet, UpdateToyServlet, DeleteToyServlet
  */
 @Controller
 public class ToyController {
