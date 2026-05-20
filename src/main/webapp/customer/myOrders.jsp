@@ -26,7 +26,6 @@
 <div class="dashboard-layout">
 
     <aside class="sidebar customer-side">
-        
         <h2>ToyLand</h2>
 
         <a href="customerDashboard.jsp">Dashboard</a>
