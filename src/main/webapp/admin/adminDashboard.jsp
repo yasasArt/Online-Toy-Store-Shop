@@ -31,6 +31,8 @@
         <a href="${pageContext.request.contextPath}/admin/adminDashboard.jsp">Dashboard</a>
         <a href="${pageContext.request.contextPath}/admin/addToy.jsp">Add Toy</a>
         <a href="${pageContext.request.contextPath}/viewToys">Manage Toys</a>
+        <a href="${pageContext.request.contextPath}/admin/addCategory.jsp">Add Category</a>
+        <a href="${pageContext.request.contextPath}/viewCategories">Manage Categories</a>
         <a href="${pageContext.request.contextPath}/admin/viewCustomers.jsp">Customers</a>
         <a href="${pageContext.request.contextPath}/admin/viewOrders.jsp">Orders</a>
         <a href="${pageContext.request.contextPath}/admin/viewPayments.jsp">Payments</a>

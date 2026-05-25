@@ -1,5 +1,5 @@
 <%@ page import="java.util.List" %>
-<%@ page import="com.toystore.model.Toy" %>
+<%@ page import="com.toystore.model.Category" %>
 <%@ page import="com.toystore.model.User" %>
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 
@@ -11,13 +11,13 @@
         return;
     }
 
-    List<Toy> toyList = (List<Toy>) request.getAttribute("toyList");
+    List<Category> categoryList = (List<Category>) request.getAttribute("categoryList");
 %>
 
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Manage Toys</title>
+    <title>Manage Categories</title>
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
 </head>
 <body>
@@ -41,11 +41,27 @@
     </aside>
 
     <main class="content">
-        <h1>Manage Toys</h1>
-        <p class="muted">View, update, and delete toy details.</p>
+        <h1>Manage Categories</h1>
+        <p class="muted">View, update, and delete toy categories.</p>
 
-        <form action="${pageContext.request.contextPath}/viewToys" method="get" class="search-bar">
-            <input type="text" name="keyword" placeholder="Search toys...">
+        <%
+            String msg = request.getParameter("msg");
+            if (msg != null) {
+                String displayMsg = "";
+                if ("categoryAdded".equals(msg)) displayMsg = "Category added successfully.";
+                else if ("categoryUpdated".equals(msg)) displayMsg = "Category updated successfully.";
+                else if ("categoryDeleted".equals(msg)) displayMsg = "Category deleted successfully.";
+                
+                if (!displayMsg.isEmpty()) {
+        %>
+                    <div class="alert success" style="margin-bottom: 20px;"><%= displayMsg %></div>
+        <%
+                }
+            }
+        %>
+
+        <form action="${pageContext.request.contextPath}/viewCategories" method="get" class="search-bar">
+            <input type="text" name="keyword" placeholder="Search categories...">
             <button type="submit">Search</button>
         </form>
 
@@ -53,38 +69,30 @@
             <table>
                 <thead>
                 <tr>
-                    <th>ID</th>
-                    <th>Toy</th>
-                    <th>Category</th>
-                    <th>Age</th>
-                    <th>Brand</th>
-                    <th>Price</th>
-                    <th>Qty</th>
+                    <th>Category ID</th>
+                    <th>Category Name</th>
+                    <th>Description</th>
                     <th>Actions</th>
                 </tr>
                 </thead>
 
                 <tbody>
-                <% if (toyList != null && !toyList.isEmpty()) {
-                    for (Toy toy : toyList) { %>
+                <% if (categoryList != null && !categoryList.isEmpty()) {
+                    for (Category category : categoryList) { %>
 
                     <tr>
-                        <td><%= toy.getToyId() %></td>
-                        <td><%= toy.getToyName() %></td>
-                        <td><%= toy.getCategory() %></td>
-                        <td><%= toy.getAgeGroup() %></td>
-                        <td><%= toy.getBrand() %></td>
-                        <td>Rs. <%= toy.getPrice() %></td>
-                        <td><%= toy.getQuantity() %></td>
+                        <td><%= category.getCategoryId() %></td>
+                        <td><%= category.getCategoryName() %></td>
+                        <td><%= category.getDescription() %></td>
                         <td>
                             <a class="edit-btn"
-                               href="${pageContext.request.contextPath}/updateToy?toyId=<%= toy.getToyId() %>">
+                               href="${pageContext.request.contextPath}/updateCategory?categoryId=<%= category.getCategoryId() %>">
                                 Edit
                             </a>
 
                             <a class="delete-btn"
-                               href="${pageContext.request.contextPath}/deleteToy?toyId=<%= toy.getToyId() %>"
-                               onclick="return confirm('Are you sure you want to delete this toy?');">
+                               href="${pageContext.request.contextPath}/deleteCategory?categoryId=<%= category.getCategoryId() %>"
+                               onclick="return confirm('Are you sure you want to delete this category?');">
                                 Delete
                             </a>
                         </td>
@@ -93,7 +101,7 @@
                 <% }} else { %>
 
                     <tr>
-                        <td colspan="8">No toys found.</td>
+                        <td colspan="4">No categories found.</td>
                     </tr>
 
                 <% } %>

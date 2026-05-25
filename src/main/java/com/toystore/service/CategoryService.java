@@ -113,4 +113,38 @@ public class CategoryService {
 
         return false;
     }
+
+    public List<Category> searchCategories(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllCategories();
+        }
+
+        List<Category> categoryList = new ArrayList<>();
+        String sql = "SELECT * FROM categories WHERE category_id LIKE ? OR category_name LIKE ? OR description LIKE ?";
+
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+
+            String pattern = "%" + keyword.trim() + "%";
+            ps.setString(1, pattern);
+            ps.setString(2, pattern);
+            ps.setString(3, pattern);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Category category = new Category(
+                            rs.getString("category_id"),
+                            rs.getString("category_name"),
+                            rs.getString("description")
+                    );
+                    categoryList.add(category);
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return categoryList;
+    }
 }
